@@ -4,40 +4,42 @@ import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/esm/styles/prism";
 
 // Helper for textarea auto expand
-const clamp = (num, min, max) => Math.max(min, Math.min(num, max));
+const clamp = (num: number, min: number, max: number): number =>
+  Math.max(min, Math.min(num, max));
 
 export default function CodeComment() {
-  const [code, setCode] = useState("");
-  const [written, setWritten] = useState(""); // last submitted code
-  const [result, setResult] = useState("");
-  const [loading, setLoading] = useState(false);
-  const [copied, setCopied] = useState(false);
+  const [code, setCode] = useState<string>("");
+  const [written, setWritten] = useState<string>(""); // last submitted code
+  const [result, setResult] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
+  const [copied, setCopied] = useState<boolean>(false);
 
-  const [inputHeight, setInputHeight] = useState(48);
+  const [inputHeight, setInputHeight] = useState<number>(48);
 
-  const textareaRef = useRef(null);
+  const textareaRef = useRef<HTMLTextAreaElement | null>(null);
 
   // Expand input up to half screen on input
   useEffect(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
-      textareaRef.current.style.height = `${clamp(
+      const newHeight = clamp(
         textareaRef.current.scrollHeight,
         48,
         window.innerHeight / 2
-      )}px`;
+      );
+      textareaRef.current.style.height = `${newHeight}px`;
       setInputHeight(textareaRef.current.offsetHeight);
     }
   }, [code]);
 
   // Submit handler (on Enter for textarea, or button)
-  const handleGenerate = async () => {
+  const handleGenerate = async (): Promise<void> => {
     if (!code.trim()) return;
     setLoading(true);
     setWritten(code); // show the just-submitted code above output
     setCode("");
     try {
-      const commented = await generateCodeComments(code);
+      const commented: string = await generateCodeComments(code);
       setResult(commented);
     } catch (error) {
       setResult("// ❌ Failed to generate comments. Please try again.");
@@ -48,17 +50,21 @@ export default function CodeComment() {
   };
 
   // Handle Enter key (with Shift for new line)
-  const handleKeyDown = (e) => {
+  const handleKeyDown = (
+    e: React.KeyboardEvent<HTMLTextAreaElement>
+  ): void => {
     if (e.key === "Enter" && !e.shiftKey) {
       e.preventDefault();
       handleGenerate();
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(result);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleCopy = (): void => {
+    if (!result) return;
+    navigator.clipboard.writeText(result).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
+    });
   };
 
   return (
@@ -84,7 +90,8 @@ export default function CodeComment() {
               maxHeight: "50vh",
               minHeight: 48,
               height: inputHeight,
-              overflowY: inputHeight >= window.innerHeight / 2 ? "auto" : "hidden",
+              overflowY:
+                inputHeight >= window.innerHeight / 2 ? "auto" : "hidden",
             }}
             className="
               w-full rounded-lg border border-gray-700 bg-gray-800 text-white font-mono p-3
@@ -103,7 +110,6 @@ export default function CodeComment() {
               aria-label="Generate Comments"
               type="button"
             >
-              {/* Material/Arrow icon style */}
               {loading ? (
                 <span className="animate-spin">⏳</span>
               ) : (
@@ -125,8 +131,18 @@ export default function CodeComment() {
       >
         {written && (
           <div className="mb-6 px-2 md:px-0">
-            <div className="text-xs uppercase text-indigo-400 mb-1 ml-1">Your Code</div>
-            <SyntaxHighlighter language="javascript" style={vscDarkPlus} customStyle={{ fontSize: 13, borderRadius: 8, padding: 18 }}>
+            <div className="text-xs uppercase text-indigo-400 mb-1 ml-1">
+              Your Code
+            </div>
+            <SyntaxHighlighter
+              language="javascript"
+              style={vscDarkPlus}
+              customStyle={{
+                fontSize: 13,
+                borderRadius: 8,
+                padding: 18,
+              }}
+            >
               {written}
             </SyntaxHighlighter>
           </div>
@@ -134,17 +150,29 @@ export default function CodeComment() {
         {result && (
           <div className="mb-10 px-2 md:px-0">
             <div className="flex justify-between items-center mb-1">
-              <span className="text-xs uppercase text-green-400 ml-1">Commented Code</span>
+              <span className="text-xs uppercase text-green-400 ml-1">
+                Commented Code
+              </span>
               <button
                 onClick={handleCopy}
                 className={`ml-2 px-2 py-1 rounded ${
-                  copied ? "bg-green-500 text-white" : "bg-gray-800 text-gray-300"
+                  copied
+                    ? "bg-green-500 text-white"
+                    : "bg-gray-800 text-gray-300"
                 } text-xs`}
               >
                 {copied ? "✅ Copied!" : "📋 Copy"}
               </button>
             </div>
-            <SyntaxHighlighter language="javascript" style={vscDarkPlus} customStyle={{ fontSize: 13, borderRadius: 8, padding: 18 }}>
+            <SyntaxHighlighter
+              language="javascript"
+              style={vscDarkPlus}
+              customStyle={{
+                fontSize: 13,
+                borderRadius: 8,
+                padding: 18,
+              }}
+            >
               {result}
             </SyntaxHighlighter>
           </div>
